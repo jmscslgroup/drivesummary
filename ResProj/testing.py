@@ -150,22 +150,19 @@ class Main_Window(QtWidgets.QMainWindow, Ui_MainWindow):
         #plt.style.use(value)
        
        
-        #try:
-        self.compileCharacteristics()
+        try:
+            self.compileCharacteristics()
 
-        self.ridedistancelabel.setText("Total Distance (Meters): " + str(np.round(self.characteristics['tripDistance'], 2)))
-        self.ridetimelabel.setText("Total Time (Minutes): " + str(np.round(self.characteristics['tripTime'], 2)))
-        self.cctimelabel.setText("Cruise Time(Minutes): " + str(np.round(self.characteristics['cruiseTime'], 2)))
-        self.ccpercentlabel.setText("Percent in CC: " + str(np.round(self.characteristics['cruisePercentage'], 2)) + "%")
-        self.stopslabel.setText("Num Stops: " + str(self.characteristics['tripStops']))
-        '''
-            #self.cruiseDF = self.df.acc_state(plot = True)
+            self.ridedistancelabel.setText("Total Distance (Meters): " + str(np.round(self.characteristics['tripDistance'], 2)))
+            self.ridetimelabel.setText("Total Time (Minutes): " + str(np.round(self.characteristics['tripTime'], 2)))
+            self.cctimelabel.setText("Cruise Time(Minutes): " + str(np.round(self.characteristics['cruiseTime'], 2)))
+            self.ccpercentlabel.setText("Percent in CC: " + str(np.round(self.characteristics['cruisePercentage'], 2)) + "%")
+            self.stopslabel.setText("Num Stops: " + str(self.characteristics['tripStops']))
+
+
         except Exception as error:
-            print("An exception occurred with the characteristics: ", error)
+            print("An exception occurred when parsing characteristics: ", error)
 
-        t0 = self.cruiseDF.iloc[0].Time
-        plt.plot(self.cruiseDF.Time-t0,self.cruiseDF.Message)
-        '''
 
         
         try:
@@ -194,52 +191,34 @@ class Main_Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
         except Exception as error:
 
-            print("An exception occurred with the graph: ", error)
+            print("An exception occurred with graphing: ", error)
 
-
-
-
-        #graph = strymread.plt_ts(self.speedDF, "Speed", ax = self.canv.axes)
-
-        #self.visualizeData(self.df.speed())
-
-        #self.annot_max(self.df.index, self.df[self.dataName],ax)
 
     def compileCharacteristics(self):
-        #accelComfort
-        #self.accelComfort()
         
         
         #tripDistance
         tripDistance = self.tripDistance()
         
         
-        #tripStops
+        #cruisePercentage
         percentageHisto = self.cruiseTime()
+        
         cruisePercentage = (percentageHisto[1] * 100)
         
+        #tripStops
         tripStops = self.tripStops()
+
         #tripTIme
         tripTimeSeconds = self.speedDF["Time"].iloc[-1] - self.speedDF["Time"].iloc[0]
         tripTime = tripTimeSeconds/60
 
+        #cruiseTime
         cruiseTime = tripTime * percentageHisto[1]
 
         self.characteristics = {'tripDistance': tripDistance, 'tripTime': tripTime, 'cruisePercentage': cruisePercentage,
                                 'cruiseTime': cruiseTime, 'tripStops': tripStops}
 
-        #self.characteristics = {'tripDistance': tripDistance, 'numberStops': numStops}
-        #make a dictionary here. Tripdistance is one thing
-
-    def accelComfort(self):
-        self.speedDF['Accel'] = (self.speedDF['Message'] - self.speedDF['Message'].shift(1)) / (self.speedDF['Time'] - self.speedDF['Time'].shift(1)).fillna(0)
-
-        print(self.speedDF['Accel'])
-
-        
-        
-        
-        #sum((accelDF.Time - accelDF.Time.shift(1)) if accelDF.Message > 30)
 
     def cruiseTime(self):
         #convert to datetime
@@ -265,36 +244,6 @@ class Main_Window(QtWidgets.QMainWindow, Ui_MainWindow):
             start=date_parse(str(self.cruiseDF["Time"].iloc[0])),
             end=date_parse(str(self.cruiseDF["Time"].iloc[-1])))
 
-
-
-        '''
-        temp = self.cruiseDF.asfreq(freq='1S')
-        print(temp.to_string())
-        temp2 = temp['Message'].value_counts()[1]
-        print(temp2)
-        '''
-
-        '''
-        #turn to pivot table
-        df1 = self.cruiseDF.pivot_table(index=[self.cruiseDF.Time.dt.date],
-                            columns='Message', values='Time', aggfunc='first')
-        
-        df1[1] = df1[1].fillna(pd.to_datetime(df1.index.to_series()))
-        df1[0] = df1[0].fillna(pd.to_datetime(
-        df1.index.to_series())+ pd.DateOffset(+1))
-
-        print(df1[0].asfreq('1D').fillna(pd.Timedelta(seconds=0)))
-        
-        result = (df1[1] - df1[0]).asfreq('1D').fillna(pd.Timedelta(seconds=0))
-        result0 = (df1[0] - df1[1]).asfreq('1D').fillna(pd.Timedelta(seconds=0))
-
-        print(abs(result0[0]))
-        print(result[0])
-        '''
-        #df1[True] = df1[True].fillna(pd.to_datetime(df1.index.to_series()))
-        #df1[False] = df1[False].fillna(pd.to_datetime(
-            #df1.index.to_series()) + pd.DateOffset(+1))
-        #result = (df1[False] - df1[True]).asfreq('1D').fillna(pd.Timedelta(seconds=0))
     def tripStops(self):
         g = self.speedDF['Message'].ne(self.speedDF['Message'].shift()).cumsum()
         g = g[self.speedDF['Message'].eq(0)]
@@ -393,27 +342,3 @@ def main():
 
 if __name__ == '__main__': main()
 
-
-"""
-dataframe = strymread(csvfile='C:\\Users\\flame\\Downloads\\CSV Dfs\\TotalSmaller.csv', dbcfile="nissan_rogue_2021.dbc")
-print('done')
-
-
-
-speedDF = dataframe.speed()
-
-speedDF.plot(legend=True)
-
-
-
-strymread.plt_ts(speedDF, "Wut is this")
-
-
-print('done2')
-
-
-cruiseDF = dataframe.acc_state()
-steeringAngleDF = dataframe.msg_subset(conditions = steering_angle)
-
-
-"""
